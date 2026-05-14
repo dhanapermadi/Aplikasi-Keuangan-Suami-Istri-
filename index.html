@@ -6,7 +6,7 @@
     <title>Aplikasi Keuangan Suami Istri</title>
     <!-- Memuat Library D3.js untuk Grafik -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <!-- MEMUAT FIREBASE (Otak Database Cloud) -->
+    <!-- MEMUAT FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
@@ -149,26 +149,22 @@
 </div>
 
 <script>
-    // ====================================================================
-    // ⚠️ WAJIB GANTI BAGIAN INI DENGAN KODE FIREBASE ANDA DARI LANGKAH 1
-    // ====================================================================
+    // Konfigurasi Firebase Resmi Milik Anda
     const firebaseConfig = {
-  apiKey: "AIzaSyAGRqX2Gp6vGb25jRjsWs_iK5yuGkr3hWE",
-  authDomain: "keuangan-keluarga-8a9ee.firebaseapp.com",
-  projectId: "keuangan-keluarga-8a9ee",
-  storageBucket: "keuangan-keluarga-8a9ee.firebasestorage.app",
-  messagingSenderId: "345297536532",
-  appId: "1:345297536532:web:cd1729a80abe0078a3c901",
-  measurementId: "G-SH5JM3YMZ1"
-};
+        apiKey: "AIzaSyAGRqX2Gp6vGb25jRjsWs_iK5yuGkr3hWE",
+        authDomain: "keuangan-keluarga-8a9ee.firebaseapp.com",
+        projectId: "keuangan-keluarga-8a9ee",
+        storageBucket: "keuangan-keluarga-8a9ee.firebasestorage.app",
+        messagingSenderId: "345297536532",
+        appId: "1:345297536532:web:cd1729a80abe0078a3c901",
+        measurementId: "G-SH5JM3YMZ1",
+        // Penambahan databaseURL sangat penting untuk sinkronisasi Realtime Database
+        databaseURL: "https://keuangan-keluarga-8a9ee-default-rtdb.firebaseio.com"
+    };
+    
     // Inisialisasi Firebase
-    if(firebaseConfig.apiKey === "KODE_API_ANDA_DISINI") {
-        alert("PENTING: Anda belum memasukkan konfigurasi Firebase. Aplikasi tidak akan tersinkronisasi. Silakan ikuti panduan untuk memasukkan kode Firebase Anda.");
-    } else {
-        firebase.initializeApp(firebaseConfig);
-    }
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    // ====================================================================
 
     let transactions = [];
     let currentType = 'out';
@@ -277,7 +273,6 @@
         document.getElementById('istriBalance').innerText = 'Rp ' + balIstri.toLocaleString('id-ID');
     }
 
-    // (Fungsi Filter, RenderChart D3.js, dan Export Excel tetap sama persis seperti sebelumnya)
     function setFilter(filter) {
         currentFilter = filter;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
