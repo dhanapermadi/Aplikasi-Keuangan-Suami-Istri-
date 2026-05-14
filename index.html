@@ -67,7 +67,7 @@
         #chart-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 150px;}
         .btn-export { background-color: #2196f3; color: white; padding: 10px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; flex-shrink: 0;}
 
-        /* Penyesuaian Bottom Nav agar tidak menumpuk saat keyboard muncul */
+        /* Penyesuaian Bottom Nav */
         .bottom-nav { width: 100%; background: white; display: flex; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); flex-shrink: 0; }
         .nav-item { flex: 1; text-align: center; padding: 12px 0; color: #777; font-size: 13px; cursor: pointer; font-weight: bold; }
         .nav-item.active { color: #4caf50; border-top: 3px solid #4caf50; }
@@ -152,7 +152,7 @@
 </div>
 
 <script>
-    // KODE KUNCI FIREBASE ANDA (Dibiarkan persis tanpa diubah)
+    // KODE KUNCI FIREBASE ANDA 
     const firebaseConfig = {
         apiKey: "AIzaSyAGRqX2Gp6vGb25jRjsWs_iK5yuGkr3hWE",
         authDomain: "keuangan-keluarga-8a9ee.firebaseapp.com",
@@ -164,7 +164,10 @@
     };
 
     let db = null;
-    let transactions = [];
+    let isCloudReady = false;
+    
+    // SELALU TARIK DATA DARI MEMORI HP DULU AGAR CEPAT
+    let transactions = JSON.parse(localStorage.getItem('data_keuangan_lokal')) || [];
     let currentType = 'out';
     let currentFilter = 'bulanan';
 
@@ -173,34 +176,43 @@
         in: ["Gaji", "Bonus", "Hasil Usaha", "Pemberian", "Lainnya"]
     };
 
-    // INISIALISASI ANTI-CRASH
+    // PENGATURAN AWAL LAYAR
+    document.getElementById('inputDate').valueAsDate = new Date();
+    updateCategoryOptions();
+    updateUI(); // Langsung gambar layar berdasarkan memori HP
+
+    // MENCOBA MENGHUBUNGKAN KE FIREBASE (DI LATAR BELAKANG)
     try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
 
-        // Mencoba mengambil data secara Real-Time
-        db.ref('transaksi_keuangan').on('value', (snapshot) => {
-            const data = snapshot.val();
-            transactions = [];
-            if (data) {
-                for (let id in data) {
-                    transactions.push({ firebaseId: id, ...data[id] });
-                }
+        // Mengecek apakah server Google merespons
+        db.ref('.info/connected').on('value', function(snap) {
+            if (snap.val() === true) {
+                isCloudReady = true;
+                setIndikator('🟢 Cloud Tersambung', '#4caf50');
+            } else {
+                isCloudReady = false;
+                setIndikator('🟡 Offline (Menyimpan di HP)', '#ff9800');
             }
-            updateUI(); 
-            setIndikator('🟢 Sinkron Cloud', 'rgba(0,0,0,0.2)');
-        }, (error) => {
-            // Jika ditolak oleh Firebase (karena rule/aturan)
-            throw new Error(error.message);
         });
 
-    } catch (error) {
-        console.warn("Sistem Cloud gagal. Mengalihkan ke Mode Lokal agar tombol tetap hidup.", error);
-        setIndikator('🟡 Mode Lokal', '#ff9800');
-        
-        // JATUH KEMBALI KE PENYIMPANAN LOKAL JIKA FIREBASE ERROR
-        transactions = JSON.parse(localStorage.getItem('keuangan_pasangan_lokal')) || [];
-        updateUI();
+        // Dengarkan jika ada data baru masuk dari pasangan
+        db.ref('transaksi_keuangan').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                let cloudData = [];
+                for (let id in data) {
+                    cloudData.push({ firebaseId: id, ...data[id] });
+                }
+                transactions = cloudData;
+                updateUI();
+                // Backup otomatis data pasangan ke HP ini
+                localStorage.setItem('data_keuangan_lokal', JSON.stringify(transactions));
+            }
+        });
+    } catch(e) {
+        setIndikator('🔴 Mode Lokal', '#f44336');
     }
 
     function setIndikator(teks, warna) {
@@ -208,10 +220,6 @@
         el.innerText = teks;
         el.style.background = warna;
     }
-
-    // PENGATURAN AWAL SAAT APLIKASI DIBUKA
-    document.getElementById('inputDate').valueAsDate = new Date();
-    updateCategoryOptions();
 
     // FUNGSI-FUNGSI TOMBOL
     function setTransType(type) {
@@ -243,6 +251,7 @@
         if(view === 'report') renderChart();
     }
 
+    // FUNGSI SIMPAN ANTI-MACET
     function addTransaction() {
         const date = document.getElementById('inputDate').value;
         const user = document.getElementById('inputUser').value;
@@ -254,33 +263,25 @@
             alert("Harap isi keterangan dan jumlah (Rp)!"); return;
         }
 
-        const trx = { timestamp: Date.now(), type: currentType, date, user, category, desc, amount };
-        
-        if (db) {
-            try {
-                db.ref('transaksi_keuangan').push(trx).then(() => {
-                    bersihkanForm();
-                }).catch(error => {
-                    simpanLokal(trx); // Fallback jika push gagal
-                });
-            } catch (error) {
-                simpanLokal(trx);
-            }
-        } else {
-            simpanLokal(trx);
-        }
-    }
+        const trx = { id: Date.now(), timestamp: Date.now(), type: currentType, date, user, category, desc, amount };
 
-    function simpanLokal(trx) {
+        // 1. LANGSUNG CATAT KE LAYAR DAN MEMORI HP (INSTAN!)
         transactions.push(trx);
-        localStorage.setItem('keuangan_pasangan_lokal', JSON.stringify(transactions));
-        bersihkanForm();
-        updateUI();
-    }
-
-    function bersihkanForm() {
+        localStorage.setItem('data_keuangan_lokal', JSON.stringify(transactions));
+        
+        // Bersihkan ketikan form
         document.getElementById('inputDesc').value = '';
         document.getElementById('inputAmount').value = '';
+        
+        // Perbarui angka saldo secara instan
+        updateUI();
+
+        // 2. DIAM-DIAM KIRIM KE FIREBASE JIKA ONLINE
+        if (db && isCloudReady) {
+            db.ref('transaksi_keuangan').push(trx).catch(err => {
+                console.log("Firebase belum siap, data tetap tersimpan di HP.");
+            });
+        }
     }
 
     function updateUI() {
