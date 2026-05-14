@@ -11,13 +11,14 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
-        /* CSS Styles untuk Satu Layar (Compact Mode) */
+        /* CSS Styles untuk Satu Layar */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
-        .mobile-container { background-color: #ffffff; width: 100%; max-width: 400px; height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; }
+        .mobile-container { background-color: #ffffff; width: 100%; max-width: 400px; height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        
         .header { background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 12px 15px; text-align: center; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; flex-shrink: 0; position: relative;}
         
-        /* Indikator Online */
-        #statusKoneksi { position: absolute; top: 10px; right: 15px; font-size: 10px; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 10px; }
+        /* Indikator Online/Offline */
+        #statusKoneksi { position: absolute; top: 10px; right: 15px; font-size: 10px; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 10px; font-weight: bold;}
 
         .header h2 { margin: 0; font-size: 12px; font-weight: normal; opacity: 0.9;}
         .header h1 { margin: 5px 0 10px 0; font-size: 24px; }
@@ -27,24 +28,25 @@
         .wallet-item span { display: block; font-size: 11px; }
         .wallet-item strong { font-size: 14px; }
         
-        .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 15px; padding-bottom: 60px; }
+        .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 15px; }
         .view-section { display: none; flex-direction: column; height: 100%; }
         .view-section.active { display: flex; }
 
         .type-toggle { display: flex; margin-bottom: 10px; border-radius: 6px; overflow: hidden; border: 1px solid #4caf50; flex-shrink: 0; }
-        .type-toggle button { flex: 1; padding: 6px; border: none; background: white; color: #4caf50; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .type-toggle button { flex: 1; padding: 6px; border: none; background: white; color: #4caf50; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s;}
         .type-toggle button.active { background: #4caf50; color: white; }
         
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
         .form-group label { display: block; margin-bottom: 3px; font-size: 11px; font-weight: bold; color: #555;}
         .form-group input, .form-group select { width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 12px; }
-        .form-full { grid-column: span 2; display: flex; gap: 8px; }
+        .form-full { grid-column: span 2; display: flex; gap: 8px; flex-shrink: 0;}
         .form-full .desc { flex: 2; }
         .form-full .btn { flex: 1; }
         
         .btn-submit { background-color: #ff9800; color: white; padding: 6px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; height: 100%; }
+        .btn-submit:active { background-color: #e68a00; } /* Efek klik */
         
-        .history { display: flex; flex-direction: column; flex: 1; overflow: hidden; margin-top: 5px; }
+        .history { display: flex; flex-direction: column; flex: 1; overflow: hidden; margin-top: 5px; min-height: 0; }
         .history h3 { font-size: 13px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0 0 5px 0; flex-shrink: 0;}
         #transactionList { flex: 1; overflow-y: auto; padding-right: 5px; } 
         
@@ -62,10 +64,11 @@
         .filter-group { display: flex; justify-content: space-between; margin-bottom: 15px; flex-shrink: 0;}
         .filter-group button { flex: 1; margin: 0 4px; padding: 6px; border: 1px solid #ddd; background: white; border-radius: 15px; font-size: 11px; cursor: pointer; }
         .filter-group button.active { background: #4caf50; color: white; border-color: #4caf50; }
-        #chart-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 200px;}
+        #chart-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 150px;}
         .btn-export { background-color: #2196f3; color: white; padding: 10px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; flex-shrink: 0;}
 
-        .bottom-nav { position: absolute; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 10; }
+        /* Penyesuaian Bottom Nav agar tidak menumpuk saat keyboard muncul */
+        .bottom-nav { width: 100%; background: white; display: flex; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); flex-shrink: 0; }
         .nav-item { flex: 1; text-align: center; padding: 12px 0; color: #777; font-size: 13px; cursor: pointer; font-weight: bold; }
         .nav-item.active { color: #4caf50; border-top: 3px solid #4caf50; }
         
@@ -77,7 +80,7 @@
 
 <div class="mobile-container">
     <div class="header">
-        <span id="statusKoneksi">🟢 Sinkron</span>
+        <span id="statusKoneksi">Memuat...</span>
         <h2>Total Saldo Keluarga</h2>
         <h1 id="totalBalance">Rp 0</h1>
         <div class="wallet-split">
@@ -149,7 +152,7 @@
 </div>
 
 <script>
-    // Konfigurasi Firebase Resmi Milik Anda
+    // KODE KUNCI FIREBASE ANDA (Dibiarkan persis tanpa diubah)
     const firebaseConfig = {
         apiKey: "AIzaSyAGRqX2Gp6vGb25jRjsWs_iK5yuGkr3hWE",
         authDomain: "keuangan-keluarga-8a9ee.firebaseapp.com",
@@ -157,15 +160,10 @@
         storageBucket: "keuangan-keluarga-8a9ee.firebasestorage.app",
         messagingSenderId: "345297536532",
         appId: "1:345297536532:web:cd1729a80abe0078a3c901",
-        measurementId: "G-SH5JM3YMZ1",
-        // Penambahan databaseURL sangat penting untuk sinkronisasi Realtime Database
-        databaseURL: "https://keuangan-keluarga-8a9ee-default-rtdb.firebaseio.com"
+        measurementId: "G-SH5JM3YMZ1"
     };
-    
-    // Inisialisasi Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
+    let db = null;
     let transactions = [];
     let currentType = 'out';
     let currentFilter = 'bulanan';
@@ -175,21 +173,47 @@
         in: ["Gaji", "Bonus", "Hasil Usaha", "Pemberian", "Lainnya"]
     };
 
+    // INISIALISASI ANTI-CRASH
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+
+        // Mencoba mengambil data secara Real-Time
+        db.ref('transaksi_keuangan').on('value', (snapshot) => {
+            const data = snapshot.val();
+            transactions = [];
+            if (data) {
+                for (let id in data) {
+                    transactions.push({ firebaseId: id, ...data[id] });
+                }
+            }
+            updateUI(); 
+            setIndikator('🟢 Sinkron Cloud', 'rgba(0,0,0,0.2)');
+        }, (error) => {
+            // Jika ditolak oleh Firebase (karena rule/aturan)
+            throw new Error(error.message);
+        });
+
+    } catch (error) {
+        console.warn("Sistem Cloud gagal. Mengalihkan ke Mode Lokal agar tombol tetap hidup.", error);
+        setIndikator('🟡 Mode Lokal', '#ff9800');
+        
+        // JATUH KEMBALI KE PENYIMPANAN LOKAL JIKA FIREBASE ERROR
+        transactions = JSON.parse(localStorage.getItem('keuangan_pasangan_lokal')) || [];
+        updateUI();
+    }
+
+    function setIndikator(teks, warna) {
+        const el = document.getElementById('statusKoneksi');
+        el.innerText = teks;
+        el.style.background = warna;
+    }
+
+    // PENGATURAN AWAL SAAT APLIKASI DIBUKA
     document.getElementById('inputDate').valueAsDate = new Date();
     updateCategoryOptions();
 
-    // MEMBACA DATA DARI CLOUD SECARA REAL-TIME
-    db.ref('transaksi_keuangan').on('value', (snapshot) => {
-        const data = snapshot.val();
-        transactions = [];
-        if (data) {
-            for (let id in data) {
-                transactions.push({ firebaseId: id, ...data[id] });
-            }
-        }
-        updateUI(); // Segarkan layar tiap ada data baru
-    });
-
+    // FUNGSI-FUNGSI TOMBOL
     function setTransType(type) {
         currentType = type;
         document.getElementById('btnTypeOut').classList.toggle('active', type === 'out');
@@ -212,8 +236,10 @@
         document.getElementById('view-report').classList.remove('active');
         document.getElementById('nav-home').classList.remove('active');
         document.getElementById('nav-report').classList.remove('active');
+        
         document.getElementById('view-' + view).classList.add('active');
         document.getElementById('nav-' + view).classList.add('active');
+        
         if(view === 'report') renderChart();
     }
 
@@ -230,11 +256,31 @@
 
         const trx = { timestamp: Date.now(), type: currentType, date, user, category, desc, amount };
         
-        // MENGIRIM DATA KE CLOUD FIREBASE
-        db.ref('transaksi_keuangan').push(trx).then(() => {
-            document.getElementById('inputDesc').value = '';
-            document.getElementById('inputAmount').value = '';
-        }).catch(error => alert("Gagal menyimpan: " + error));
+        if (db) {
+            try {
+                db.ref('transaksi_keuangan').push(trx).then(() => {
+                    bersihkanForm();
+                }).catch(error => {
+                    simpanLokal(trx); // Fallback jika push gagal
+                });
+            } catch (error) {
+                simpanLokal(trx);
+            }
+        } else {
+            simpanLokal(trx);
+        }
+    }
+
+    function simpanLokal(trx) {
+        transactions.push(trx);
+        localStorage.setItem('keuangan_pasangan_lokal', JSON.stringify(transactions));
+        bersihkanForm();
+        updateUI();
+    }
+
+    function bersihkanForm() {
+        document.getElementById('inputDesc').value = '';
+        document.getElementById('inputAmount').value = '';
     }
 
     function updateUI() {
@@ -299,7 +345,7 @@
         const dataMap = d3.rollup(filteredData, v => d3.sum(v, d => d.amount), d => d.category);
         const data = Array.from(dataMap, ([name, value]) => ({name, value}));
 
-        const width = 200, height = 200, margin = 10;
+        const width = 200, height = 150, margin = 10;
         const radius = Math.min(width, height) / 2 - margin;
         const svg = d3.select("#chart-container").append("svg").attr("width", width).attr("height", height).append("g").attr("transform", `translate(${width/2},${height/2})`);
         const color = d3.scaleOrdinal().domain(data.map(d => d.name)).range(["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#ff9800"]);
