@@ -2,124 +2,139 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aplikasi Keuangan Suami Istri</title>
     <!-- Memuat Library D3.js untuk Grafik -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        /* CSS Styles */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; display: flex; justify-content: center; height: 100vh; }
-        .mobile-container { background-color: #ffffff; width: 100%; max-width: 400px; height: 100%; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; }
-        .header { background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 20px; text-align: center; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
-        .header h2 { margin: 0; font-size: 14px; font-weight: normal; opacity: 0.9;}
-        .header h1 { margin: 10px 0 15px 0; font-size: 28px; }
-        .wallet-split { display: flex; justify-content: space-between; background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; }
+        /* CSS Styles untuk Satu Layar (Compact Mode) */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+        .mobile-container { background-color: #ffffff; width: 100%; max-width: 400px; height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; }
+        
+        /* Header Dipadatkan */
+        .header { background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 12px 15px; text-align: center; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; flex-shrink: 0; }
+        .header h2 { margin: 0; font-size: 12px; font-weight: normal; opacity: 0.9;}
+        .header h1 { margin: 5px 0 10px 0; font-size: 24px; }
+        .wallet-split { display: flex; justify-content: space-between; background: rgba(255,255,255,0.2); padding: 6px; border-radius: 8px; }
         .wallet-item { flex: 1; text-align: center; }
         .wallet-item:first-child { border-right: 1px solid rgba(255,255,255,0.3); }
-        .wallet-item span { display: block; font-size: 12px; }
-        .wallet-item strong { font-size: 16px; }
+        .wallet-item span { display: block; font-size: 11px; }
+        .wallet-item strong { font-size: 14px; }
         
-        .content { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
-        .view-section { display: none; }
-        .view-section.active { display: block; }
+        /* Area Konten Utama */
+        .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 15px; padding-bottom: 60px; }
+        .view-section { display: none; flex-direction: column; height: 100%; }
+        .view-section.active { display: flex; }
 
-        /* Form Styles */
-        .type-toggle { display: flex; margin-bottom: 15px; border-radius: 8px; overflow: hidden; border: 1px solid #4caf50; }
-        .type-toggle button { flex: 1; padding: 10px; border: none; background: white; color: #4caf50; font-weight: bold; cursor: pointer; }
+        /* Tipe Transaksi */
+        .type-toggle { display: flex; margin-bottom: 10px; border-radius: 6px; overflow: hidden; border: 1px solid #4caf50; flex-shrink: 0; }
+        .type-toggle button { flex: 1; padding: 6px; border: none; background: white; color: #4caf50; font-size: 12px; font-weight: bold; cursor: pointer; }
         .type-toggle button.active { background: #4caf50; color: white; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: bold; color: #555;}
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        .btn-submit { width: 100%; background-color: #ff9800; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 5px; }
         
-        /* History Styles */
-        .history { margin-top: 25px; }
-        .history h3 { font-size: 16px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px;}
-        .transaction { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        /* Form Grid (Dibuat Sebelahan) */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
+        .form-group label { display: block; margin-bottom: 3px; font-size: 11px; font-weight: bold; color: #555;}
+        .form-group input, .form-group select { width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 12px; }
+        .form-full { grid-column: span 2; display: flex; gap: 8px; }
+        .form-full .desc { flex: 2; }
+        .form-full .btn { flex: 1; }
+        
+        .btn-submit { background-color: #ff9800; color: white; padding: 6px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; height: 100%; }
+        
+        /* Riwayat Transaksi (Scrollable) */
+        .history { display: flex; flex-direction: column; flex: 1; overflow: hidden; margin-top: 5px; }
+        .history h3 { font-size: 13px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0 0 5px 0; flex-shrink: 0;}
+        #transactionList { flex: 1; overflow-y: auto; padding-right: 5px; } /* Hanya area ini yang bisa di-scroll */
+        
+        /* Item Transaksi */
+        .transaction { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
         .t-info { display: flex; flex-direction: column; }
-        .t-title { font-weight: bold; font-size: 14px; color: #333; }
-        .t-meta { font-size: 11px; color: #777; margin-top: 4px; }
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 5px; }
+        .t-title { font-weight: bold; font-size: 12px; color: #333; }
+        .t-meta { font-size: 10px; color: #777; margin-top: 2px; }
+        .badge { padding: 2px 4px; border-radius: 4px; font-size: 9px; margin-right: 4px; }
         .badge-suami { background-color: #e3f2fd; color: #1976d2; }
         .badge-istri { background-color: #fce4ec; color: #c2185b; }
         .badge-cat { background-color: #eee; color: #555; }
-        .t-amount.in { color: #2e7d32; font-weight: bold; }
-        .t-amount.out { color: #d32f2f; font-weight: bold; }
+        .t-amount.in { color: #2e7d32; font-weight: bold; font-size: 12px;}
+        .t-amount.out { color: #d32f2f; font-weight: bold; font-size: 12px;}
 
         /* Report Styles */
-        .filter-group { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .filter-group button { flex: 1; margin: 0 5px; padding: 8px; border: 1px solid #ddd; background: white; border-radius: 20px; font-size: 12px; cursor: pointer; }
+        .filter-group { display: flex; justify-content: space-between; margin-bottom: 15px; flex-shrink: 0;}
+        .filter-group button { flex: 1; margin: 0 4px; padding: 6px; border: 1px solid #ddd; background: white; border-radius: 15px; font-size: 11px; cursor: pointer; }
         .filter-group button.active { background: #4caf50; color: white; border-color: #4caf50; }
-        #chart-container { display: flex; justify-content: center; align-items: center; margin: 20px 0; }
-        .btn-export { width: 100%; background-color: #2196f3; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        #chart-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 200px;}
+        .btn-export { background-color: #2196f3; color: white; padding: 10px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; flex-shrink: 0;}
 
         /* Bottom Nav */
-        .bottom-nav { position: absolute; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { flex: 1; text-align: center; padding: 15px 0; color: #777; font-size: 14px; cursor: pointer; font-weight: bold; }
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 10; }
+        .nav-item { flex: 1; text-align: center; padding: 12px 0; color: #777; font-size: 13px; cursor: pointer; font-weight: bold; }
         .nav-item.active { color: #4caf50; border-top: 3px solid #4caf50; }
+        
+        /* Sembunyikan scrollbar bawaan agar bersih */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <div class="mobile-container">
-    <!-- Header Akun & Saldo -->
+    <!-- Header -->
     <div class="header">
         <h2>Total Saldo Keluarga</h2>
         <h1 id="totalBalance">Rp 0</h1>
         <div class="wallet-split">
-            <div class="wallet-item">
-                <span>Saldo Suami</span>
-                <strong id="suamiBalance">Rp 0</strong>
-            </div>
-            <div class="wallet-item">
-                <span>Saldo Istri</span>
-                <strong id="istriBalance">Rp 0</strong>
-            </div>
+            <div class="wallet-item"><span>Suami</span><strong id="suamiBalance">Rp 0</strong></div>
+            <div class="wallet-item"><span>Istri</span><strong id="istriBalance">Rp 0</strong></div>
         </div>
     </div>
 
     <div class="content">
-        <!-- TAMPILAN BERANDA (Pencatatan) -->
+        <!-- TAMPILAN BERANDA -->
         <div id="view-home" class="view-section active">
             <div class="type-toggle">
                 <button id="btnTypeOut" class="active" onclick="setTransType('out')">Pengeluaran</button>
-                <button id="btnTypeIn" onclick="setTransType('in')">Isi Saldo (Pemasukan)</button>
+                <button id="btnTypeIn" onclick="setTransType('in')">Isi Saldo</button>
             </div>
 
-            <div class="form-group">
-                <label>Tanggal</label>
-                <input type="date" id="inputDate">
+            <!-- Form Grid Dua Kolom -->
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="date" id="inputDate">
+                </div>
+                <div class="form-group">
+                    <label>Akun</label>
+                    <select id="inputUser">
+                        <option value="Suami">Suami</option>
+                        <option value="Istri">Istri</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select id="inputCategory"></select>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah (Rp)</label>
+                    <input type="number" id="inputAmount" placeholder="Contoh: 50000">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Dompet / Akun</label>
-                <select id="inputUser">
-                    <option value="Suami">Suami</option>
-                    <option value="Istri">Istri</option>
-                </select>
+            
+            <div class="form-full">
+                <div class="form-group desc">
+                    <input type="text" id="inputDesc" placeholder="Keterangan: Cth. Sayur...">
+                </div>
+                <div class="form-group btn">
+                    <button class="btn-submit" onclick="addTransaction()">Simpan</button>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Kategori</label>
-                <select id="inputCategory">
-                    <!-- Kategori akan diisi otomatis oleh JavaScript -->
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Keterangan</label>
-                <input type="text" id="inputDesc" placeholder="Contoh: Belanja Sayur, Gaji...">
-            </div>
-            <div class="form-group">
-                <label>Jumlah (Rp)</label>
-                <input type="number" id="inputAmount" placeholder="Contoh: 50000">
-            </div>
-            <button class="btn-submit" onclick="addTransaction()">Simpan Transaksi</button>
 
             <div class="history">
-                <h3>Riwayat Transaksi</h3>
+                <h3>Riwayat</h3>
                 <div id="transactionList"></div>
             </div>
         </div>
 
-        <!-- TAMPILAN LAPORAN (Grafik & Ekspor) -->
+        <!-- TAMPILAN LAPORAN -->
         <div id="view-report" class="view-section">
             <div class="filter-group">
                 <button class="filter-btn" onclick="setFilter('harian')">Harian</button>
@@ -127,11 +142,10 @@
                 <button class="filter-btn active" onclick="setFilter('bulanan')">Bulanan</button>
             </div>
             
-            <h4 style="text-align:center; color:#555; margin-bottom:0;">Pengeluaran Berdasarkan Kategori</h4>
-            <!-- Tempat D3.js menggambar grafik -->
+            <h4 style="text-align:center; color:#555; margin:0; font-size:12px;">Pengeluaran Kategori</h4>
             <div id="chart-container"></div>
             
-            <button class="btn-export" onclick="exportToExcel()">📥 Ekspor Data ke Excel (CSV)</button>
+            <button class="btn-export" onclick="exportToExcel()">📥 Ekspor Data ke Excel</button>
         </div>
     </div>
 
@@ -143,23 +157,19 @@
 </div>
 
 <script>
-    // --- PENYIMPANAN & VARIABEL ---
-    // Menggunakan Local Storage agar data tidak hilang saat web direfresh
     let transactions = JSON.parse(localStorage.getItem('keuangan_pasangan')) || [];
     let currentType = 'out';
     let currentFilter = 'bulanan';
 
     const categories = {
-        out: ["Makanan & Minuman", "Belanja Harian", "Tagihan & Utilitas", "Transportasi", "Hiburan", "Kesehatan", "Lainnya"],
+        out: ["Makanan", "Belanja Harian", "Tagihan", "Transport", "Hiburan", "Kesehatan", "Lainnya"],
         in: ["Gaji", "Bonus", "Hasil Usaha", "Pemberian", "Lainnya"]
     };
 
-    // --- INISIALISASI AWAL ---
     document.getElementById('inputDate').valueAsDate = new Date();
     updateCategoryOptions();
     updateUI();
 
-    // --- LOGIKA FORM & ANTARMUKA ---
     function setTransType(type) {
         currentType = type;
         document.getElementById('btnTypeOut').classList.toggle('active', type === 'out');
@@ -186,11 +196,9 @@
         document.getElementById('view-' + view).classList.add('active');
         document.getElementById('nav-' + view).classList.add('active');
 
-        // Render ulang chart jika tab laporan dibuka
         if(view === 'report') renderChart();
     }
 
-    // --- LOGIKA PENCATATAN TRANSAKSI ---
     function addTransaction() {
         const date = document.getElementById('inputDate').value;
         const user = document.getElementById('inputUser').value;
@@ -199,38 +207,29 @@
         const amount = parseInt(document.getElementById('inputAmount').value);
 
         if(!date || !desc || isNaN(amount) || amount <= 0) {
-            alert("Harap lengkapi semua isian dengan benar!"); return;
+            alert("Harap isi keterangan dan jumlah (Rp)!"); return;
         }
 
-        const trx = {
-            id: Date.now(), type: currentType, date, user, category, desc, amount
-        };
-
+        const trx = { id: Date.now(), type: currentType, date, user, category, desc, amount };
         transactions.push(trx);
-        // Simpan data permanen ke peramban
         localStorage.setItem('keuangan_pasangan', JSON.stringify(transactions));
         
         document.getElementById('inputDesc').value = '';
         document.getElementById('inputAmount').value = '';
         updateUI();
-        alert("Transaksi berhasil disimpan!");
     }
 
     function updateUI() {
         let balSuami = 0; let balIstri = 0;
-
         const list = document.getElementById('transactionList');
         list.innerHTML = '';
 
-        // Urutkan dari transaksi paling baru
         const sortedTrx = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
 
         sortedTrx.forEach(t => {
-            // Kalkulasi Saldo
             if(t.user === 'Suami') balSuami += (t.type === 'in' ? t.amount : -t.amount);
             if(t.user === 'Istri') balIstri += (t.type === 'in' ? t.amount : -t.amount);
 
-            // Render Daftar Riwayat
             const div = document.createElement('div');
             div.className = 'transaction';
             const badgeUser = t.user === 'Suami' ? 'badge-suami' : 'badge-istri';
@@ -243,7 +242,7 @@
                     <div class="t-meta">
                         <span class="badge ${badgeUser}">${t.user}</span>
                         <span class="badge badge-cat">${t.category}</span>
-                        <span>${t.date}</span>
+                        <span>${t.date.slice(5)}</span> <!-- Menyingkat tanggal -->
                     </div>
                 </div>
                 <div class="t-amount ${amountClass}">${amountPrefix} ${t.amount.toLocaleString('id-ID')}</div>
@@ -251,13 +250,11 @@
             list.appendChild(div);
         });
 
-        // Perbarui Teks Saldo di Header
         document.getElementById('totalBalance').innerText = 'Rp ' + (balSuami + balIstri).toLocaleString('id-ID');
         document.getElementById('suamiBalance').innerText = 'Rp ' + balSuami.toLocaleString('id-ID');
         document.getElementById('istriBalance').innerText = 'Rp ' + balIstri.toLocaleString('id-ID');
     }
 
-    // --- LOGIKA GRAFIK D3.JS ---
     function setFilter(filter) {
         currentFilter = filter;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -267,99 +264,46 @@
 
     function renderChart() {
         const container = document.getElementById('chart-container');
-        container.innerHTML = ''; // Bersihkan grafik sebelumnya
+        container.innerHTML = ''; 
 
-        // Menyaring data pengeluaran berdasarkan filter waktu
         const now = new Date();
         const filteredData = transactions.filter(t => {
-            if(t.type !== 'out') return false; // Hanya hitung pengeluaran
+            if(t.type !== 'out') return false; 
             const tDate = new Date(t.date);
-            if(currentFilter === 'harian') {
-                return tDate.toDateString() === now.toDateString();
-            } else if (currentFilter === 'mingguan') {
-                const diffTime = Math.abs(now - tDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                return diffDays <= 7;
-            } else {
-                return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
-            }
+            if(currentFilter === 'harian') return tDate.toDateString() === now.toDateString();
+            else if (currentFilter === 'mingguan') return Math.ceil(Math.abs(now - tDate) / (1000 * 60 * 60 * 24)) <= 7;
+            else return tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
         });
 
         if(filteredData.length === 0) {
-            container.innerHTML = '<p style="color:#999; font-size:14px; margin-top:20px;">Belum ada pengeluaran di periode ini.</p>';
-            return;
+            container.innerHTML = '<p style="color:#999; font-size:12px;">Belum ada pengeluaran.</p>'; return;
         }
 
-        // Kelompokkan Total Jumlah berdasarkan Kategori
         const dataMap = d3.rollup(filteredData, v => d3.sum(v, d => d.amount), d => d.category);
         const data = Array.from(dataMap, ([name, value]) => ({name, value}));
 
-        // Pengaturan Kanvas D3.js
-        const width = 250, height = 250, margin = 20;
+        // Ukuran Chart Disesuaikan agar muat
+        const width = 200, height = 200, margin = 10;
         const radius = Math.min(width, height) / 2 - margin;
-        const svg = d3.select("#chart-container")
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", `translate(${width/2},${height/2})`);
+        const svg = d3.select("#chart-container").append("svg").attr("width", width).attr("height", height).append("g").attr("transform", `translate(${width/2},${height/2})`);
 
-        // Palet Warna Kategori
-        const color = d3.scaleOrdinal()
-            .domain(data.map(d => d.name))
-            .range(["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#ff9800"]);
-
+        const color = d3.scaleOrdinal().domain(data.map(d => d.name)).range(["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#ff9800"]);
         const pie = d3.pie().value(d => d.value);
-        const data_ready = pie(data);
+        const arc = d3.arc().innerRadius(radius * 0.4).outerRadius(radius);
 
-        // Menggambar Grafik Cincin (Donut Chart)
-        const arc = d3.arc().innerRadius(radius * 0.5).outerRadius(radius);
+        svg.selectAll('allSlices').data(pie(data)).join('path').attr('d', arc).attr('fill', d => color(d.data.name)).attr("stroke", "white").style("stroke-width", "2px");
 
-        svg.selectAll('allSlices')
-            .data(data_ready)
-            .join('path')
-            .attr('d', arc)
-            .attr('fill', d => color(d.data.name))
-            .attr("stroke", "white")
-            .style("stroke-width", "2px")
-            .style("opacity", 0.9);
-
-        // Menambahkan Label Teks ke dalam Grafik
         const arcLabel = d3.arc().innerRadius(radius * 0.7).outerRadius(radius * 0.7);
-        svg.selectAll('allLabels')
-            .data(data_ready)
-            .join('text')
-            .text(d => d.data.name)
-            .attr("transform", d => `translate(${arcLabel.centroid(d)})`)
-            .style("text-anchor", "middle")
-            .style("font-size", "10px")
-            .style("fill", "#fff")
-            .style("font-weight", "bold");
+        svg.selectAll('allLabels').data(pie(data)).join('text').text(d => d.data.name).attr("transform", d => `translate(${arcLabel.centroid(d)})`).style("text-anchor", "middle").style("font-size", "9px").style("fill", "#fff").style("font-weight", "bold");
     }
 
-    // --- LOGIKA EKSPOR EXCEL (CSV) ---
     function exportToExcel() {
-        if(transactions.length === 0) {
-            alert("Tidak ada data untuk diekspor!"); return;
-        }
-
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "ID,Tanggal,Tipe,Dompet,Kategori,Keterangan,Jumlah\r\n"; // Header Kolom
-
-        transactions.forEach(t => {
-            const typeLabel = t.type === 'in' ? 'Pemasukan' : 'Pengeluaran';
-            const row = [t.id, t.date, typeLabel, t.user, t.category, t.desc, t.amount].join(",");
-            csvContent += row + "\r\n";
-        });
-
-        // Proses Unduh Otomatis
-        const encodedUri = encodeURI(csvContent);
+        if(transactions.length === 0) { alert("Tidak ada data!"); return; }
+        let csvContent = "data:text/csv;charset=utf-8,ID,Tanggal,Tipe,Akun,Kategori,Keterangan,Jumlah\r\n"; 
+        transactions.forEach(t => csvContent += `${t.id},${t.date},${t.type==='in'?'Pemasukan':'Pengeluaran'},${t.user},${t.category},${t.desc},${t.amount}\r\n`);
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "Laporan_Keuangan_Pasangan.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Keuangan_Pasangan.csv");
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 </script>
 </body>
