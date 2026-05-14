@@ -6,13 +6,19 @@
     <title>Aplikasi Keuangan Suami Istri</title>
     <!-- Memuat Library D3.js untuk Grafik -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- MEMUAT FIREBASE (Otak Database Cloud) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
     <style>
         /* CSS Styles untuk Satu Layar (Compact Mode) */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
         .mobile-container { background-color: #ffffff; width: 100%; max-width: 400px; height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; }
+        .header { background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 12px 15px; text-align: center; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; flex-shrink: 0; position: relative;}
         
-        /* Header Dipadatkan */
-        .header { background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 12px 15px; text-align: center; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; flex-shrink: 0; }
+        /* Indikator Online */
+        #statusKoneksi { position: absolute; top: 10px; right: 15px; font-size: 10px; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 10px; }
+
         .header h2 { margin: 0; font-size: 12px; font-weight: normal; opacity: 0.9;}
         .header h1 { margin: 5px 0 10px 0; font-size: 24px; }
         .wallet-split { display: flex; justify-content: space-between; background: rgba(255,255,255,0.2); padding: 6px; border-radius: 8px; }
@@ -21,17 +27,14 @@
         .wallet-item span { display: block; font-size: 11px; }
         .wallet-item strong { font-size: 14px; }
         
-        /* Area Konten Utama */
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 15px; padding-bottom: 60px; }
         .view-section { display: none; flex-direction: column; height: 100%; }
         .view-section.active { display: flex; }
 
-        /* Tipe Transaksi */
         .type-toggle { display: flex; margin-bottom: 10px; border-radius: 6px; overflow: hidden; border: 1px solid #4caf50; flex-shrink: 0; }
         .type-toggle button { flex: 1; padding: 6px; border: none; background: white; color: #4caf50; font-size: 12px; font-weight: bold; cursor: pointer; }
         .type-toggle button.active { background: #4caf50; color: white; }
         
-        /* Form Grid (Dibuat Sebelahan) */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
         .form-group label { display: block; margin-bottom: 3px; font-size: 11px; font-weight: bold; color: #555;}
         .form-group input, .form-group select { width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 12px; }
@@ -41,12 +44,10 @@
         
         .btn-submit { background-color: #ff9800; color: white; padding: 6px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; height: 100%; }
         
-        /* Riwayat Transaksi (Scrollable) */
         .history { display: flex; flex-direction: column; flex: 1; overflow: hidden; margin-top: 5px; }
         .history h3 { font-size: 13px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0 0 5px 0; flex-shrink: 0;}
-        #transactionList { flex: 1; overflow-y: auto; padding-right: 5px; } /* Hanya area ini yang bisa di-scroll */
+        #transactionList { flex: 1; overflow-y: auto; padding-right: 5px; } 
         
-        /* Item Transaksi */
         .transaction { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
         .t-info { display: flex; flex-direction: column; }
         .t-title { font-weight: bold; font-size: 12px; color: #333; }
@@ -58,19 +59,16 @@
         .t-amount.in { color: #2e7d32; font-weight: bold; font-size: 12px;}
         .t-amount.out { color: #d32f2f; font-weight: bold; font-size: 12px;}
 
-        /* Report Styles */
         .filter-group { display: flex; justify-content: space-between; margin-bottom: 15px; flex-shrink: 0;}
         .filter-group button { flex: 1; margin: 0 4px; padding: 6px; border: 1px solid #ddd; background: white; border-radius: 15px; font-size: 11px; cursor: pointer; }
         .filter-group button.active { background: #4caf50; color: white; border-color: #4caf50; }
         #chart-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 200px;}
         .btn-export { background-color: #2196f3; color: white; padding: 10px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; flex-shrink: 0;}
 
-        /* Bottom Nav */
         .bottom-nav { position: absolute; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 10; }
         .nav-item { flex: 1; text-align: center; padding: 12px 0; color: #777; font-size: 13px; cursor: pointer; font-weight: bold; }
         .nav-item.active { color: #4caf50; border-top: 3px solid #4caf50; }
         
-        /* Sembunyikan scrollbar bawaan agar bersih */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
     </style>
@@ -78,8 +76,8 @@
 <body>
 
 <div class="mobile-container">
-    <!-- Header -->
     <div class="header">
+        <span id="statusKoneksi">🟢 Sinkron</span>
         <h2>Total Saldo Keluarga</h2>
         <h1 id="totalBalance">Rp 0</h1>
         <div class="wallet-split">
@@ -89,14 +87,12 @@
     </div>
 
     <div class="content">
-        <!-- TAMPILAN BERANDA -->
         <div id="view-home" class="view-section active">
             <div class="type-toggle">
                 <button id="btnTypeOut" class="active" onclick="setTransType('out')">Pengeluaran</button>
                 <button id="btnTypeIn" onclick="setTransType('in')">Isi Saldo</button>
             </div>
 
-            <!-- Form Grid Dua Kolom -->
             <div class="form-grid">
                 <div class="form-group">
                     <label>Tanggal</label>
@@ -134,22 +130,18 @@
             </div>
         </div>
 
-        <!-- TAMPILAN LAPORAN -->
         <div id="view-report" class="view-section">
             <div class="filter-group">
                 <button class="filter-btn" onclick="setFilter('harian')">Harian</button>
                 <button class="filter-btn" onclick="setFilter('mingguan')">Mingguan</button>
                 <button class="filter-btn active" onclick="setFilter('bulanan')">Bulanan</button>
             </div>
-            
             <h4 style="text-align:center; color:#555; margin:0; font-size:12px;">Pengeluaran Kategori</h4>
             <div id="chart-container"></div>
-            
             <button class="btn-export" onclick="exportToExcel()">📥 Ekspor Data ke Excel</button>
         </div>
     </div>
 
-    <!-- Navigasi Bawah -->
     <div class="bottom-nav">
         <div class="nav-item active" id="nav-home" onclick="switchView('home')">🏠 Beranda</div>
         <div class="nav-item" id="nav-report" onclick="switchView('report')">📊 Laporan</div>
@@ -157,7 +149,29 @@
 </div>
 
 <script>
-    let transactions = JSON.parse(localStorage.getItem('keuangan_pasangan')) || [];
+    // ====================================================================
+    // ⚠️ WAJIB GANTI BAGIAN INI DENGAN KODE FIREBASE ANDA DARI LANGKAH 1
+    // ====================================================================
+    const firebaseConfig = {
+        apiKey: "KODE_API_ANDA_DISINI",
+        authDomain: "proyek-anda.firebaseapp.com",
+        databaseURL: "https://proyek-anda-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "proyek-anda",
+        storageBucket: "proyek-anda.appspot.com",
+        messagingSenderId: "123456789",
+        appId: "1:123456789:web:abcdefg"
+    };
+    
+    // Inisialisasi Firebase
+    if(firebaseConfig.apiKey === "KODE_API_ANDA_DISINI") {
+        alert("PENTING: Anda belum memasukkan konfigurasi Firebase. Aplikasi tidak akan tersinkronisasi. Silakan ikuti panduan untuk memasukkan kode Firebase Anda.");
+    } else {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+    // ====================================================================
+
+    let transactions = [];
     let currentType = 'out';
     let currentFilter = 'bulanan';
 
@@ -168,7 +182,18 @@
 
     document.getElementById('inputDate').valueAsDate = new Date();
     updateCategoryOptions();
-    updateUI();
+
+    // MEMBACA DATA DARI CLOUD SECARA REAL-TIME
+    db.ref('transaksi_keuangan').on('value', (snapshot) => {
+        const data = snapshot.val();
+        transactions = [];
+        if (data) {
+            for (let id in data) {
+                transactions.push({ firebaseId: id, ...data[id] });
+            }
+        }
+        updateUI(); // Segarkan layar tiap ada data baru
+    });
 
     function setTransType(type) {
         currentType = type;
@@ -192,10 +217,8 @@
         document.getElementById('view-report').classList.remove('active');
         document.getElementById('nav-home').classList.remove('active');
         document.getElementById('nav-report').classList.remove('active');
-        
         document.getElementById('view-' + view).classList.add('active');
         document.getElementById('nav-' + view).classList.add('active');
-
         if(view === 'report') renderChart();
     }
 
@@ -210,13 +233,13 @@
             alert("Harap isi keterangan dan jumlah (Rp)!"); return;
         }
 
-        const trx = { id: Date.now(), type: currentType, date, user, category, desc, amount };
-        transactions.push(trx);
-        localStorage.setItem('keuangan_pasangan', JSON.stringify(transactions));
+        const trx = { timestamp: Date.now(), type: currentType, date, user, category, desc, amount };
         
-        document.getElementById('inputDesc').value = '';
-        document.getElementById('inputAmount').value = '';
-        updateUI();
+        // MENGIRIM DATA KE CLOUD FIREBASE
+        db.ref('transaksi_keuangan').push(trx).then(() => {
+            document.getElementById('inputDesc').value = '';
+            document.getElementById('inputAmount').value = '';
+        }).catch(error => alert("Gagal menyimpan: " + error));
     }
 
     function updateUI() {
@@ -224,7 +247,7 @@
         const list = document.getElementById('transactionList');
         list.innerHTML = '';
 
-        const sortedTrx = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const sortedTrx = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date) || b.timestamp - a.timestamp);
 
         sortedTrx.forEach(t => {
             if(t.user === 'Suami') balSuami += (t.type === 'in' ? t.amount : -t.amount);
@@ -242,7 +265,7 @@
                     <div class="t-meta">
                         <span class="badge ${badgeUser}">${t.user}</span>
                         <span class="badge badge-cat">${t.category}</span>
-                        <span>${t.date.slice(5)}</span> <!-- Menyingkat tanggal -->
+                        <span>${t.date.slice(5)}</span>
                     </div>
                 </div>
                 <div class="t-amount ${amountClass}">${amountPrefix} ${t.amount.toLocaleString('id-ID')}</div>
@@ -255,6 +278,7 @@
         document.getElementById('istriBalance').innerText = 'Rp ' + balIstri.toLocaleString('id-ID');
     }
 
+    // (Fungsi Filter, RenderChart D3.js, dan Export Excel tetap sama persis seperti sebelumnya)
     function setFilter(filter) {
         currentFilter = filter;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -265,7 +289,6 @@
     function renderChart() {
         const container = document.getElementById('chart-container');
         container.innerHTML = ''; 
-
         const now = new Date();
         const filteredData = transactions.filter(t => {
             if(t.type !== 'out') return false; 
@@ -282,11 +305,9 @@
         const dataMap = d3.rollup(filteredData, v => d3.sum(v, d => d.amount), d => d.category);
         const data = Array.from(dataMap, ([name, value]) => ({name, value}));
 
-        // Ukuran Chart Disesuaikan agar muat
         const width = 200, height = 200, margin = 10;
         const radius = Math.min(width, height) / 2 - margin;
         const svg = d3.select("#chart-container").append("svg").attr("width", width).attr("height", height).append("g").attr("transform", `translate(${width/2},${height/2})`);
-
         const color = d3.scaleOrdinal().domain(data.map(d => d.name)).range(["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#ff9800"]);
         const pie = d3.pie().value(d => d.value);
         const arc = d3.arc().innerRadius(radius * 0.4).outerRadius(radius);
@@ -299,8 +320,8 @@
 
     function exportToExcel() {
         if(transactions.length === 0) { alert("Tidak ada data!"); return; }
-        let csvContent = "data:text/csv;charset=utf-8,ID,Tanggal,Tipe,Akun,Kategori,Keterangan,Jumlah\r\n"; 
-        transactions.forEach(t => csvContent += `${t.id},${t.date},${t.type==='in'?'Pemasukan':'Pengeluaran'},${t.user},${t.category},${t.desc},${t.amount}\r\n`);
+        let csvContent = "data:text/csv;charset=utf-8,Tanggal,Tipe,Akun,Kategori,Keterangan,Jumlah\r\n"; 
+        transactions.forEach(t => csvContent += `${t.date},${t.type==='in'?'Pemasukan':'Pengeluaran'},${t.user},${t.category},${t.desc},${t.amount}\r\n`);
         const link = document.createElement("a");
         link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Keuangan_Pasangan.csv");
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
