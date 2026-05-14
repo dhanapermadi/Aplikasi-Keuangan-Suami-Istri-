@@ -15,19 +15,33 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
         .mobile-container { background-color: #ffffff; width: 100%; max-width: 400px; height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
         
-        .header { background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 12px 15px; text-align: center; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; flex-shrink: 0; position: relative;}
+        .header { background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 12px 15px; text-align: center; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; z-index: 10;}
         
-        /* Indikator Online/Offline */
-        #statusKoneksi { position: absolute; top: 10px; right: 15px; font-size: 10px; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 10px; font-weight: bold;}
+        /* Baris Atas: Menu Kiri & Status Kanan */
+        .header-top { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; position: relative;}
+        
+        /* Dropdown Menu Style */
+        .menu-container { position: relative; }
+        #menuBtn { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 12px; font-weight: bold; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: 0.2s;}
+        #menuBtn:active { background: rgba(255,255,255,0.4); }
+        .dropdown-content { display: none; position: absolute; left: 0; top: 110%; background-color: #ffffff; min-width: 130px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; z-index: 20; }
+        .dropdown-content.show { display: block; }
+        .dropdown-content a { color: #333; padding: 10px 12px; text-decoration: none; display: block; font-size: 13px; text-align: left; border-bottom: 1px solid #eee;}
+        .dropdown-content a:last-child { border-bottom: none; }
+        .dropdown-content a:hover { background-color: #f9f9f9; }
+        .dropdown-content a.active { background-color: #e8f5e9; color: #2e7d32; font-weight: bold; }
+
+        #statusKoneksi { font-size: 10px; padding: 4px 10px; border-radius: 12px; font-weight: bold; transition: 0.3s; }
 
         .header h2 { margin: 0; font-size: 12px; font-weight: normal; opacity: 0.9;}
         .header h1 { margin: 5px 0 10px 0; font-size: 24px; }
-        .wallet-split { display: flex; justify-content: space-between; background: rgba(255,255,255,0.2); padding: 6px; border-radius: 8px; }
+        .wallet-split { display: flex; justify-content: space-between; background: rgba(255,255,255,0.2); padding: 6px; border-radius: 8px; width: 100%; box-sizing: border-box;}
         .wallet-item { flex: 1; text-align: center; }
         .wallet-item:first-child { border-right: 1px solid rgba(255,255,255,0.3); }
         .wallet-item span { display: block; font-size: 11px; }
         .wallet-item strong { font-size: 14px; }
         
+        /* Area Konten Diperluas karena Navigasi Bawah Hilang */
         .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 12px 15px; }
         .view-section { display: none; flex-direction: column; height: 100%; }
         .view-section.active { display: flex; }
@@ -44,7 +58,7 @@
         .form-full .btn { flex: 1; }
         
         .btn-submit { background-color: #ff9800; color: white; padding: 6px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; width: 100%; height: 100%; }
-        .btn-submit:active { background-color: #e68a00; } /* Efek klik */
+        .btn-submit:active { background-color: #e68a00; } 
         
         .history { display: flex; flex-direction: column; flex: 1; overflow: hidden; margin-top: 5px; min-height: 0; }
         .history h3 { font-size: 13px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0 0 5px 0; flex-shrink: 0;}
@@ -66,11 +80,6 @@
         .filter-group button.active { background: #4caf50; color: white; border-color: #4caf50; }
         #chart-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 150px;}
         .btn-export { background-color: #2196f3; color: white; padding: 10px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; margin-top: 10px; flex-shrink: 0;}
-
-        /* Penyesuaian Bottom Nav */
-        .bottom-nav { width: 100%; background: white; display: flex; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); flex-shrink: 0; }
-        .nav-item { flex: 1; text-align: center; padding: 12px 0; color: #777; font-size: 13px; cursor: pointer; font-weight: bold; }
-        .nav-item.active { color: #4caf50; border-top: 3px solid #4caf50; }
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
@@ -80,7 +89,18 @@
 
 <div class="mobile-container">
     <div class="header">
-        <span id="statusKoneksi">Memuat...</span>
+        <div class="header-top">
+            <!-- Dropdown Menu Kiri Atas -->
+            <div class="menu-container">
+                <button id="menuBtn" onclick="toggleMenu()">☰ Menu</button>
+                <div id="dropdownMenu" class="dropdown-content">
+                    <a href="#" id="menu-home" class="active" onclick="switchMenu('home')">🏠 Beranda</a>
+                    <a href="#" id="menu-report" onclick="switchMenu('report')">📊 Laporan</a>
+                </div>
+            </div>
+            <!-- Status Koneksi Kanan Atas -->
+            <span id="statusKoneksi" style="background-color: #e0e0e0; color: #333;">Memuat...</span>
+        </div>
         <h2>Total Saldo Keluarga</h2>
         <h1 id="totalBalance">Rp 0</h1>
         <div class="wallet-split">
@@ -144,11 +164,6 @@
             <button class="btn-export" onclick="exportToExcel()">📥 Ekspor Data ke Excel</button>
         </div>
     </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item active" id="nav-home" onclick="switchView('home')">🏠 Beranda</div>
-        <div class="nav-item" id="nav-report" onclick="switchView('report')">📊 Laporan</div>
-    </div>
 </div>
 
 <script>
@@ -179,25 +194,56 @@
     // PENGATURAN AWAL LAYAR
     document.getElementById('inputDate').valueAsDate = new Date();
     updateCategoryOptions();
-    updateUI(); // Langsung gambar layar berdasarkan memori HP
+    updateUI(); 
+
+    // LOGIKA DROPDOWN MENU
+    function toggleMenu() {
+        document.getElementById("dropdownMenu").classList.toggle("show");
+    }
+
+    // Menutup dropdown jika user klik area kosong di layar
+    window.onclick = function(event) {
+        if (!event.target.matches('#menuBtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                if (dropdowns[i].classList.contains('show')) {
+                    dropdowns[i].classList.remove('show');
+                }
+            }
+        }
+    }
+
+    // FUNGSI BERPINDAH HALAMAN
+    function switchMenu(view) {
+        document.getElementById('view-home').classList.remove('active');
+        document.getElementById('view-report').classList.remove('active');
+        document.getElementById('menu-home').classList.remove('active');
+        document.getElementById('menu-report').classList.remove('active');
+        
+        document.getElementById('view-' + view).classList.add('active');
+        document.getElementById('menu-' + view).classList.add('active');
+        
+        // Tutup dropdown setelah ditekan
+        document.getElementById("dropdownMenu").classList.remove("show");
+
+        if(view === 'report') renderChart();
+    }
 
     // MENCOBA MENGHUBUNGKAN KE FIREBASE (DI LATAR BELAKANG)
     try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
 
-        // Mengecek apakah server Google merespons
         db.ref('.info/connected').on('value', function(snap) {
             if (snap.val() === true) {
                 isCloudReady = true;
-                setIndikator('🟢 Cloud Tersambung', '#4caf50');
+                setIndikator('🟢 Cloud Tersambung', '#d4edda', '#155724');
             } else {
                 isCloudReady = false;
-                setIndikator('🟡 Offline (Menyimpan di HP)', '#ff9800');
+                setIndikator('🟡 Offline (Simpan di HP)', '#fff3cd', '#856404');
             }
         });
 
-        // Dengarkan jika ada data baru masuk dari pasangan
         db.ref('transaksi_keuangan').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -207,21 +253,21 @@
                 }
                 transactions = cloudData;
                 updateUI();
-                // Backup otomatis data pasangan ke HP ini
                 localStorage.setItem('data_keuangan_lokal', JSON.stringify(transactions));
             }
         });
     } catch(e) {
-        setIndikator('🔴 Mode Lokal', '#f44336');
+        setIndikator('🔴 Mode Lokal', '#f8d7da', '#721c24');
     }
 
-    function setIndikator(teks, warna) {
+    function setIndikator(teks, warnaBg, warnaTeks) {
         const el = document.getElementById('statusKoneksi');
         el.innerText = teks;
-        el.style.background = warna;
+        el.style.backgroundColor = warnaBg;
+        el.style.color = warnaTeks;
     }
 
-    // FUNGSI-FUNGSI TOMBOL
+    // FUNGSI-FUNGSI TRANSAKSI
     function setTransType(type) {
         currentType = type;
         document.getElementById('btnTypeOut').classList.toggle('active', type === 'out');
@@ -239,18 +285,6 @@
         });
     }
 
-    function switchView(view) {
-        document.getElementById('view-home').classList.remove('active');
-        document.getElementById('view-report').classList.remove('active');
-        document.getElementById('nav-home').classList.remove('active');
-        document.getElementById('nav-report').classList.remove('active');
-        
-        document.getElementById('view-' + view).classList.add('active');
-        document.getElementById('nav-' + view).classList.add('active');
-        
-        if(view === 'report') renderChart();
-    }
-
     // FUNGSI SIMPAN ANTI-MACET
     function addTransaction() {
         const date = document.getElementById('inputDate').value;
@@ -265,18 +299,14 @@
 
         const trx = { id: Date.now(), timestamp: Date.now(), type: currentType, date, user, category, desc, amount };
 
-        // 1. LANGSUNG CATAT KE LAYAR DAN MEMORI HP (INSTAN!)
         transactions.push(trx);
         localStorage.setItem('data_keuangan_lokal', JSON.stringify(transactions));
         
-        // Bersihkan ketikan form
         document.getElementById('inputDesc').value = '';
         document.getElementById('inputAmount').value = '';
         
-        // Perbarui angka saldo secara instan
         updateUI();
 
-        // 2. DIAM-DIAM KIRIM KE FIREBASE JIKA ONLINE
         if (db && isCloudReady) {
             db.ref('transaksi_keuangan').push(trx).catch(err => {
                 console.log("Firebase belum siap, data tetap tersimpan di HP.");
